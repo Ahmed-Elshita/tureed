@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap');
+
+:root {
+  --color-primary: #2563EB;
+  --color-primary-light: #3B82F6;
+  --color-secondary: #6366F1;
+  --color-dark: #0F172A;
+  --color-gray-bg: #F8FAFC;
+}
+
+html[dir="rtl"] body { font-family: 'Plus Jakarta Sans', sans-serif; }
+html[dir="ltr"] body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+h1, h2, h3, .font-display { font-family: 'Sora', sans-serif; }
+
+body {
+  background: var(--color-gray-bg);
+  color: var(--color-dark);
+}
+
+/* Dropdown-only inputs across the whole site use this class —
+   visually a select, never a free-text field, by design. */
+.field-select {
+  @apply w-full rounded-xl border border-gray-light bg-white px-4 py-2.5 text-sm
+         focus:outline-none focus:ring-2 focus:ring-primary/40 appearance-none;
+}
+
+/* Horizontal rail: the category strip under the header and every
+   category-grouped product rail on the home page use this. Snap-scroll,
+   scrollbar hidden, works with touch and the desktop arrow buttons. */
+.rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail > * { scroll-snap-align: start; }

@@ -1,0 +1,60 @@
+{
+  "brand": { "tagline": "أكتر من سوق" },
+  "nav": {
+    "home": "الرئيسية",
+    "products": "منتجات",
+    "realEstate": "عقارات",
+    "services": "خدمات",
+    "sell": "أضف إعلان",
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "favorites": "المفضلة",
+    "profile": "حسابي"
+  },
+  "home": {
+    "heroTitle": "كل اللي محتاجه في مكان واحد",
+    "heroSubtitle": "بيع واشتري منتجات وعقارات وخدمات في كل مصر",
+    "searchPlaceholder": "دوّر على منتج أو خدمة أو عقار...",
+    "popularCategories": "الأقسام الأكثر بحثًا"
+  },
+  "product": {
+    "condition": "الحالة",
+    "new": "جديد",
+    "likeNew": "شبه جديد",
+    "used": "مستعمل",
+    "negotiable": "قابل للتفاوض",
+    "contactSeller": "تواصل مع البائع",
+    "callNow": "اتصل الآن",
+    "whatsapp": "واتساب",
+    "addToFavorites": "أضف للمفضلة",
+    "postedIn": "تم النشر في",
+    "similarListings": "إعلانات مشابهة"
+  },
+  "listingForm": {
+    "step1": "اختار القسم",
+    "step2": "تفاصيل الإعلان",
+    "chooseCategory": "اختار القسم المناسب لمنتجك",
+    "chooseSubcategory": "اختار القسم الفرعي",
+    "title": "عنوان الإعلان",
+    "description": "الوصف",
+    "price": "السعر",
+    "location": "الموقع",
+    "images": "الصور",
+    "submit": "نشر الإعلان",
+    "aiHelp": "ساعدني بالذكاء الاصطناعي"
+  },
+  "admin": {
+    "dashboard": "لوحة التحكم",
+    "categories": "الأقسام",
+    "attributes": "الخصائص",
+    "locations": "المواقع",
+    "products": "الإعلانات",
+    "adRequests": "طلبات الإعلانات",
+    "users": "المستخدمين والملفات",
+    "reports": "البلاغات",
+    "analytics": "الإحصائيات",
+    "settings": "الإعدادات",
+    "contacts": "تفاعلات التواصل",
+    "database": "قاعدة البيانات"
+  }
+}

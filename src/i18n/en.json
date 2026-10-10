@@ -1,0 +1,60 @@
+{
+  "brand": { "tagline": "More than a marketplace" },
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "realEstate": "Real Estate",
+    "services": "Services",
+    "sell": "Post an ad",
+    "login": "Log in",
+    "signup": "Sign up",
+    "favorites": "Favorites",
+    "profile": "My account"
+  },
+  "home": {
+    "heroTitle": "Everything you need, in one place",
+    "heroSubtitle": "Buy and sell products, real estate, and services across Egypt",
+    "searchPlaceholder": "Search for a product, service, or property...",
+    "popularCategories": "Popular categories"
+  },
+  "product": {
+    "condition": "Condition",
+    "new": "New",
+    "likeNew": "Like new",
+    "used": "Used",
+    "negotiable": "Negotiable",
+    "contactSeller": "Contact seller",
+    "callNow": "Call now",
+    "whatsapp": "WhatsApp",
+    "addToFavorites": "Add to favorites",
+    "postedIn": "Posted in",
+    "similarListings": "Similar listings"
+  },
+  "listingForm": {
+    "step1": "Choose a category",
+    "step2": "Listing details",
+    "chooseCategory": "Choose the right category for your item",
+    "chooseSubcategory": "Choose a subcategory",
+    "title": "Listing title",
+    "description": "Description",
+    "price": "Price",
+    "location": "Location",
+    "images": "Photos",
+    "submit": "Publish listing",
+    "aiHelp": "Help me with AI"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "categories": "Categories",
+    "attributes": "Attributes",
+    "locations": "Locations",
+    "products": "Listings",
+    "adRequests": "Ad Requests",
+    "users": "Users & Profiles",
+    "reports": "Reports",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "contacts": "Buyer–Seller Contacts",
+    "database": "Database"
+  }
+}
