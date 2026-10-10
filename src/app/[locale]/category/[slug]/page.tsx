@@ -10,6 +10,7 @@ import CategoryMapToggle from "@/components/product/CategoryMapToggle";
 import { categoryAccent } from "@/lib/categoryStyle";
 import { getCategoriesFlat, getCategoryBreadcrumb, getEffectiveAttributes } from "@/lib/categories";
 import { descendantIds } from "@/lib/tree";
+import { getLocationTree, getLocationsFlat } from "@/lib/locations";
 import { parseListingFilters, buildListingWhere, buildOrderBy, PAGE_SIZE } from "@/lib/listingQuery";
 import { expireOldBoosts } from "@/lib/boosts";
 import { toCardData } from "@/lib/cardData";
@@ -57,13 +58,20 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const filterableAttrs = effective.filter((a) => a.isFilterable && (a.inputType === "SELECT" || a.inputType === "MULTISELECT"));
   const allowedAttributeIds = new Set(effective.map((a) => a.id));
 
+  const locationTree = await getLocationTree().catch(() => []);
+  const locationsFlat = await getLocationsFlat(true);
+  const subcategories = flat.filter((c) => c.parentId === category.id).map((c) => ({ id: c.id, slug: c.slug, name: isAr ? c.nameAr : c.nameEn }));
+  const parentNode = category.parentId ? flat.find((c) => c.id === category.parentId) : undefined;
+  const parentLink = parentNode ? { id: parentNode.id, slug: parentNode.slug, name: isAr ? parentNode.nameAr : parentNode.nameEn } : null;
+
   const filters = parseListingFilters(sp);
-  const where = buildListingWhere(filters, { categoryIds, allowedAttributeIds });
+  const locationIds = filters.loc ? descendantIds(locationsFlat, filters.loc, true) : undefined;
+  const where = buildListingWhere(filters, { categoryIds, locationIds, allowedAttributeIds });
   const orderBy = buildOrderBy(filters.sort);
 
   const [total, listings, locations] = await Promise.all([
     db.product.count({ where }),
-    db.product.findMany({ where, orderBy, skip: (filters.page - 1) * PAGE_SIZE, take: PAGE_SIZE, include: { images: true, location: true } }),
+    db.product.findMany({ where, orderBy, skip: (filters.page - 1) * PAGE_SIZE, take: PAGE_SIZE, include: { images: { take: 1, orderBy: { sortOrder: "asc" } }, location: true } }),
     category.kind === "REAL_ESTATE"
       ? db.product.findMany({ where: { ...where, lat: { not: null }, lng: { not: null } }, select: { id: true, slug: true, titleAr: true, titleEn: true, price: true, lat: true, lng: true }, take: 200 })
       : Promise.resolve([]),
@@ -100,9 +108,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
       <div className="mx-auto max-w-7xl px-5 py-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-start">
-          <FilterSidebar attributes={filterableAttrs} isAr={isAr} />
+          <FilterSidebar attributes={filterableAttrs} locationTree={locationTree} isAr={isAr} locale={locale} subcategories={subcategories} parent={parentLink} />
 
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm text-mute">{total} {isAr ? "نتيجة" : "results"}</span>
               <SortSelect isAr={isAr} />
@@ -118,7 +126,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
               {listings.map((p) => (
                 <ProductCard key={p.id} product={toCardData(p, isAr, accent.tint)} />
               ))}

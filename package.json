@@ -12,7 +12,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:reset-categories": "SEED_MODE=categories tsx prisma/seed.ts",
+    "db:seed-ads": "tsx prisma/seed-ads.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1149.0",

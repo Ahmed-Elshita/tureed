@@ -288,3 +288,11 @@ Payment gateway, Delivery, Wallet, Escrow, Chat معقد — الـ schema ات�
 
 التسجيل بقى بيطلب كمان: **تاريخ الميلاد** (18+ إجباري) و**النوع**، واختياريًا "عرفت تريد منين؟" و**موافقة استقبال العروض** (opt-in صريح). كلها خاصة، مش بتظهر في أي صفحة عامة، وتتعدل من إعدادات الحساب. تتصدّر من لوحة التحكم ← قاعدة البيانات ← User. استخدم `marketingConsent = true` فقط عند الإرسال التسويقي.
 > بعد السحب: شغّل `npm run db:push` (أعمدة جديدة في جدول User).
+
+## Phase 12 — UI fixes, flat categories, unified filters
+
+- **Categories** are now separate top-level groups (Phones & Tablets, Electrical Appliances, Computers & Electronics, Clothing & Fashion, Furniture & Home, Kids & Toys, Cars & Vehicles, Real Estate, Services). Fresh DB: `npm run db:seed`.
+- **Existing (live) DB** — move to the new tree: `npm run db:reset-categories` (refuses if real, non-`demo-` listings exist; `FORCE=1` deletes all listings), then `npm run db:seed-ads` (6 ads/category, 1 small image each; `ADS_PER_CATEGORY=10` to change).
+- Header search is a real GET form → `/{locale}/search?q=`.
+- One `FilterSidebar` for search AND category pages: keyword (search), price min/max, category/sub-categories, location (cascading), attribute filters.
+- Cards have a fixed layout and an image fallback (`CardImage`).

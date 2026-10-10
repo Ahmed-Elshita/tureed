@@ -28,7 +28,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           where: { categoryId: { in: categoryIds }, status: "PUBLISHED" },
           orderBy: [{ boostedUntil: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
           take: 8,
-          include: { images: true, location: true },
+          include: { images: { take: 1, orderBy: { sortOrder: "asc" } }, location: true },
         })
         .catch(() => []);
       return { cat, listings };
@@ -82,7 +82,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </div>
             <div className="rail">
               {listings.map((p) => (
-                <div key={p.id} className="w-[168px] shrink-0">
+                <div key={p.id} className="w-[180px] shrink-0">
                   <ProductCard product={toCardData(p, isAr, accent.tint)} />
                 </div>
               ))}

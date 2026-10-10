@@ -16,6 +16,7 @@ interface Props {
   isAr: boolean;
   levelLabels: { ar: string[]; en: string[] };
   required?: boolean;
+  stacked?: boolean; // force one column (narrow sidebars)
 }
 
 const nameOf = (n: TreeNode, isAr: boolean) => (isAr ? n.nameAr : n.nameEn);
@@ -24,7 +25,7 @@ const nameOf = (n: TreeNode, isAr: boolean) => (isAr ? n.nameAr : n.nameEn);
 // choice has children: Fashion -> (Men | Women | Kids) -> (Clothing | Shoes ...)
 // — exactly the "dependent lists" behaviour: nothing is shown until it's
 // relevant, and nothing is ever typed by hand.
-export default function CascadingTreeSelect({ tree, value, mode, onChange, isAr, levelLabels, required }: Props) {
+export default function CascadingTreeSelect({ tree, value, mode, onChange, isAr, levelLabels, required, stacked }: Props) {
   const idsFor = (id: string | null) => (id ? findPath(tree, id).map((n) => n.id) : []);
   const [chain, setChain] = useState<string[]>(() => idsFor(value));
 
@@ -59,7 +60,7 @@ export default function CascadingTreeSelect({ tree, value, mode, onChange, isAr,
   const labels = isAr ? levelLabels.ar : levelLabels.en;
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className={stacked ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 gap-4 sm:grid-cols-2"}>
       {levels.map((options, i) => (
         <label key={i} className="block text-sm">
           <span className="mb-1 block font-medium text-dark">

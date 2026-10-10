@@ -74,80 +74,101 @@ async function addAttribute(categoryId: string, labelAr: string, labelEn: string
 
 const CONDITION_OPTIONS: Opt[] = [{ ar: "جديد", en: "New" }, { ar: "شبه جديد", en: "Like new" }, { ar: "مستعمل", en: "Used" }];
 
+type Kind = "PRODUCT" | "REAL_ESTATE" | "SERVICE";
+// Tiny helper: create a category (top-level when `parent` is omitted).
+async function cat(kind: Kind, ar: string, en: string, parent?: { id: string }, icon?: string) {
+  return db.category.create({ data: { kind, nameAr: ar, nameEn: en, slug: slugify(en), parentId: parent?.id, icon } });
+}
+
+// Flat, separate top-level categories (no single "Products" root):
+//   Phones, Electrical Appliances, Computers, Clothing, Furniture, Kids,
+//   Cars, Real Estate, Services — each with its own sub-categories.
 async function seedCategories() {
-  // ── Products > Mobiles & Tablets ──────────────────────────────
-  const products = await db.category.create({ data: { kind: "PRODUCT", nameAr: "منتجات", nameEn: "Products", slug: slugify("products"), icon: "shop" } });
-  const mobiles = await db.category.create({ data: { kind: "PRODUCT", nameAr: "موبايلات وتابلت", nameEn: "Mobiles & Tablets", slug: slugify("mobiles-tablets"), parentId: products.id } });
-  await addAttribute(mobiles.id, "المساحة التخزينية", "Storage", "SELECT", true, [{ ar: "64 جيجا", en: "64GB" }, { ar: "128 جيجا", en: "128GB" }, { ar: "256 جيجا", en: "256GB" }, { ar: "512 جيجا", en: "512GB" }], 1);
-  await addAttribute(mobiles.id, "الحالة", "Condition", "SELECT", true, CONDITION_OPTIONS, 2);
+  const SIZES: Opt[] = ["S", "M", "L", "XL", "XXL"].map((x) => ({ ar: x, en: x }));
+  const ROOMS: Opt[] = ["1", "2", "3", "4", "5+"].map((x) => ({ ar: x, en: x }));
 
-  // ── Products > Electronics (Laptops, TVs, Cameras) ────────────
-  const electronics = await db.category.create({ data: { kind: "PRODUCT", nameAr: "إلكترونيات", nameEn: "Electronics", slug: slugify("electronics"), parentId: products.id } });
-  await addAttribute(electronics.id, "الحالة", "Condition", "SELECT", true, CONDITION_OPTIONS, 1); // inherited by every sub-category below
-  const laptops = await db.category.create({ data: { kind: "PRODUCT", nameAr: "لابتوبات", nameEn: "Laptops", slug: slugify("laptops"), parentId: electronics.id } });
-  await addAttribute(laptops.id, "المعالج", "Processor", "SELECT", false, [{ ar: "Intel i5", en: "Intel i5" }, { ar: "Intel i7", en: "Intel i7" }, { ar: "Apple M-Series", en: "Apple M-Series" }, { ar: "AMD Ryzen", en: "AMD Ryzen" }]);
-  const tvs = await db.category.create({ data: { kind: "PRODUCT", nameAr: "شاشات تلفزيون", nameEn: "TVs", slug: slugify("tvs"), parentId: electronics.id } });
-  await addAttribute(tvs.id, "حجم الشاشة", "Screen Size", "SELECT", false, [{ ar: "32 بوصة", en: "32in" }, { ar: "43 بوصة", en: "43in" }, { ar: "55 بوصة", en: "55in" }, { ar: "65 بوصة فأكثر", en: "65in+" }]);
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "كاميرات", nameEn: "Cameras", slug: slugify("cameras"), parentId: electronics.id } });
+  // ── Phones & Tablets ─────────────────────────────────────────
+  const phones = await cat("PRODUCT", "موبايلات وتابلت", "Phones & Tablets", undefined, "phone");
+  await addAttribute(phones.id, "الحالة", "Condition", "SELECT", true, CONDITION_OPTIONS, 1);
+  const mobilePhones = await cat("PRODUCT", "موبايلات", "Mobile Phones", phones);
+  await addAttribute(mobilePhones.id, "المساحة التخزينية", "Storage", "SELECT", true, ["64", "128", "256", "512"].map((x) => ({ ar: `${x} جيجا`, en: `${x}GB` })), 2);
+  await addAttribute(mobilePhones.id, "الماركة", "Brand", "SELECT", false, ["Apple", "Samsung", "Xiaomi", "Oppo", "Realme", "Huawei"].map((x) => ({ ar: x, en: x })), 3);
+  await cat("PRODUCT", "تابلت", "Tablets", phones);
+  await cat("PRODUCT", "إكسسوارات موبايل", "Phone Accessories", phones);
 
-  // ── Products > Fashion > Men/Women/Kids (exactly the example given) ──
-  const fashion = await db.category.create({ data: { kind: "PRODUCT", nameAr: "أزياء", nameEn: "Fashion", slug: slugify("fashion"), parentId: products.id } });
-  await addAttribute(fashion.id, "الحالة", "Condition", "SELECT", true, [{ ar: "جديد بالتيكيت", en: "New with tags" }, { ar: "مستعمل بحالة ممتازة", en: "Used - excellent" }, { ar: "مستعمل", en: "Used" }], 1);
+  // ── Electrical Appliances ────────────────────────────────────
+  const appliances = await cat("PRODUCT", "أجهزة كهربائية", "Electrical Appliances", undefined, "plug");
+  await addAttribute(appliances.id, "الحالة", "Condition", "SELECT", true, CONDITION_OPTIONS, 1); // inherited by every sub-category
+  const tvs = await cat("PRODUCT", "تلفزيونات", "TVs", appliances);
+  await addAttribute(tvs.id, "حجم الشاشة", "Screen Size", "SELECT", false, ["32", "43", "50", "55", "65"].map((x) => ({ ar: `${x} بوصة`, en: `${x}in` })), 2);
+  await cat("PRODUCT", "غسالات", "Washing Machines", appliances);
+  await cat("PRODUCT", "ثلاجات", "Refrigerators", appliances);
+  await cat("PRODUCT", "تكييفات", "Air Conditioners", appliances);
+  await cat("PRODUCT", "أجهزة مطبخ", "Kitchen Appliances", appliances);
 
-  const men = await db.category.create({ data: { kind: "PRODUCT", nameAr: "رجالي", nameEn: "Men", slug: slugify("men-fashion"), parentId: fashion.id } });
-  const menClothing = await db.category.create({ data: { kind: "PRODUCT", nameAr: "ملابس رجالي", nameEn: "Men's Clothing", slug: slugify("men-clothing"), parentId: men.id } });
-  await addAttribute(menClothing.id, "المقاس", "Size", "SELECT", true, [{ ar: "S", en: "S" }, { ar: "M", en: "M" }, { ar: "L", en: "L" }, { ar: "XL", en: "XL" }, { ar: "XXL", en: "XXL" }]);
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "أحذية رجالي", nameEn: "Men's Shoes", slug: slugify("men-shoes"), parentId: men.id } });
+  // ── Computers & Electronics ──────────────────────────────────
+  const computers = await cat("PRODUCT", "كمبيوتر وإلكترونيات", "Computers & Electronics", undefined, "laptop");
+  await addAttribute(computers.id, "الحالة", "Condition", "SELECT", true, CONDITION_OPTIONS, 1);
+  const laptops = await cat("PRODUCT", "لابتوبات", "Laptops", computers);
+  await addAttribute(laptops.id, "المعالج", "Processor", "SELECT", false, ["Intel i5", "Intel i7", "Apple M1/M2", "AMD Ryzen"].map((x) => ({ ar: x, en: x })), 2);
+  await cat("PRODUCT", "كاميرات", "Cameras", computers);
+  await cat("PRODUCT", "ألعاب فيديو", "Gaming", computers);
 
-  const women = await db.category.create({ data: { kind: "PRODUCT", nameAr: "حريمي", nameEn: "Women", slug: slugify("women-fashion"), parentId: fashion.id } });
-  const womenClothing = await db.category.create({ data: { kind: "PRODUCT", nameAr: "ملابس حريمي", nameEn: "Women's Clothing", slug: slugify("women-clothing"), parentId: women.id } });
-  await addAttribute(womenClothing.id, "المقاس", "Size", "SELECT", true, [{ ar: "S", en: "S" }, { ar: "M", en: "M" }, { ar: "L", en: "L" }, { ar: "XL", en: "XL" }]);
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "شنط وإكسسوارات", nameEn: "Bags & Accessories", slug: slugify("women-bags"), parentId: women.id } });
+  // ── Clothing & Fashion ───────────────────────────────────────
+  const clothing = await cat("PRODUCT", "ملابس وأزياء", "Clothing & Fashion", undefined, "shirt");
+  await addAttribute(clothing.id, "الحالة", "Condition", "SELECT", true, [{ ar: "جديد بالتيكيت", en: "New with tags" }, { ar: "مستعمل بحالة جيدة", en: "Used - good" }], 1);
+  const menC = await cat("PRODUCT", "ملابس رجالي", "Men's Clothing", clothing);
+  await addAttribute(menC.id, "المقاس", "Size", "SELECT", true, SIZES, 2);
+  const womenC = await cat("PRODUCT", "ملابس حريمي", "Women's Clothing", clothing);
+  await addAttribute(womenC.id, "المقاس", "Size", "SELECT", true, SIZES, 2);
+  await cat("PRODUCT", "ملابس أطفال", "Kids' Clothing", clothing);
+  await cat("PRODUCT", "أحذية", "Shoes", clothing);
+  await cat("PRODUCT", "شنط وإكسسوارات", "Bags & Accessories", clothing);
 
-  const kids = await db.category.create({ data: { kind: "PRODUCT", nameAr: "أطفالي", nameEn: "Kids", slug: slugify("kids-fashion"), parentId: fashion.id } });
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "ملابس أطفال", nameEn: "Kids' Clothing", slug: slugify("kids-clothing"), parentId: kids.id } });
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "ألعاب", nameEn: "Toys", slug: slugify("toys"), parentId: kids.id } });
+  // ── Furniture & Home ─────────────────────────────────────────
+  const home = await cat("PRODUCT", "أثاث ومنزل", "Furniture & Home", undefined, "sofa");
+  await addAttribute(home.id, "الحالة", "Condition", "SELECT", true, CONDITION_OPTIONS, 1);
+  await cat("PRODUCT", "أنتريهات وصالونات", "Living Room", home);
+  await cat("PRODUCT", "غرف نوم", "Bedroom", home);
+  await cat("PRODUCT", "ديكور", "Home Decor", home);
 
-  // ── Products > Home & Furniture ────────────────────────────────
-  const home = await db.category.create({ data: { kind: "PRODUCT", nameAr: "أثاث ومنزل", nameEn: "Home & Furniture", slug: slugify("home-furniture"), parentId: products.id } });
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "أنتريهات وصالونات", nameEn: "Living Room", slug: slugify("living-room"), parentId: home.id } });
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "غرف نوم", nameEn: "Bedroom", slug: slugify("bedroom"), parentId: home.id } });
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "أجهزة منزلية", nameEn: "Home Appliances", slug: slugify("appliances"), parentId: home.id } });
+  // ── Kids & Toys ──────────────────────────────────────────────
+  const kids = await cat("PRODUCT", "أطفال وألعاب", "Kids & Toys", undefined, "toy");
+  await cat("PRODUCT", "ألعاب", "Toys", kids);
+  await cat("PRODUCT", "مستلزمات أطفال", "Baby Gear", kids);
 
-  // ── Products > Vehicles ─────────────────────────────────────────
-  const vehicles = await db.category.create({ data: { kind: "PRODUCT", nameAr: "عربيات", nameEn: "Vehicles", slug: slugify("vehicles"), parentId: products.id } });
-  const cars = await db.category.create({ data: { kind: "PRODUCT", nameAr: "سيارات", nameEn: "Cars", slug: slugify("cars"), parentId: vehicles.id } });
-  await addAttribute(cars.id, "سنة الصنع", "Model Year", "NUMBER", true);
-  await addAttribute(cars.id, "ناقل الحركة", "Transmission", "SELECT", true, [{ ar: "أوتوماتيك", en: "Automatic" }, { ar: "مانيوال", en: "Manual" }]);
-  await db.category.create({ data: { kind: "PRODUCT", nameAr: "موتوسيكلات", nameEn: "Motorcycles", slug: slugify("motorcycles"), parentId: vehicles.id } });
+  // ── Cars & Vehicles ──────────────────────────────────────────
+  const vehicles = await cat("PRODUCT", "سيارات ومركبات", "Cars & Vehicles", undefined, "car");
+  const cars = await cat("PRODUCT", "سيارات", "Cars", vehicles);
+  await addAttribute(cars.id, "سنة الصنع", "Model Year", "NUMBER", true, [], 1);
+  await addAttribute(cars.id, "ناقل الحركة", "Transmission", "SELECT", true, [{ ar: "أوتوماتيك", en: "Automatic" }, { ar: "مانيوال", en: "Manual" }], 2);
+  await cat("PRODUCT", "موتوسيكلات", "Motorcycles", vehicles);
 
-  // ── Real Estate > For Sale / For Rent > Apartments / Villas ──────
-  // (exactly the example given: بيع/إيجار ثم شقق/فيلات)
-  const realEstate = await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "عقارات", nameEn: "Real Estate", slug: slugify("real-estate"), icon: "home" } });
-
-  const forSale = await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "للبيع", nameEn: "For Sale", slug: slugify("for-sale"), parentId: realEstate.id } });
-  const saleApartments = await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "شقق للبيع", nameEn: "Apartments for Sale", slug: slugify("apartments-sale"), parentId: forSale.id } });
-  await addAttribute(saleApartments.id, "عدد الغرف", "Bedrooms", "SELECT", true, [{ ar: "1", en: "1" }, { ar: "2", en: "2" }, { ar: "3", en: "3" }, { ar: "4+", en: "4+" }]);
+  // ── Real Estate > For Sale / For Rent ────────────────────────
+  const realEstate = await cat("REAL_ESTATE", "عقارات", "Real Estate", undefined, "home");
+  const forSale = await cat("REAL_ESTATE", "للبيع", "For Sale", realEstate);
+  const saleApartments = await cat("REAL_ESTATE", "شقق للبيع", "Apartments for Sale", forSale);
+  await addAttribute(saleApartments.id, "عدد الغرف", "Bedrooms", "SELECT", true, ROOMS, 1);
   await addAttribute(saleApartments.id, "المساحة (م²)", "Area (sqm)", "NUMBER", true, [], 2);
-  const saleVillas = await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "فيلات للبيع", nameEn: "Villas for Sale", slug: slugify("villas-sale"), parentId: forSale.id } });
-  await addAttribute(saleVillas.id, "المساحة (م²)", "Area (sqm)", "NUMBER", true);
-  await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "أراضي للبيع", nameEn: "Land for Sale", slug: slugify("land-sale"), parentId: forSale.id } });
+  const saleVillas = await cat("REAL_ESTATE", "فيلات للبيع", "Villas for Sale", forSale);
+  await addAttribute(saleVillas.id, "المساحة (م²)", "Area (sqm)", "NUMBER", true, [], 1);
+  await cat("REAL_ESTATE", "أراضي للبيع", "Land for Sale", forSale);
 
-  const forRent = await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "للإيجار", nameEn: "For Rent", slug: slugify("for-rent"), parentId: realEstate.id } });
-  const rentApartments = await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "شقق للإيجار", nameEn: "Apartments for Rent", slug: slugify("apartments-rent"), parentId: forRent.id } });
-  await addAttribute(rentApartments.id, "عدد الغرف", "Bedrooms", "SELECT", true, [{ ar: "1", en: "1" }, { ar: "2", en: "2" }, { ar: "3", en: "3" }, { ar: "4+", en: "4+" }]);
+  const forRent = await cat("REAL_ESTATE", "للإيجار", "For Rent", realEstate);
+  const rentApartments = await cat("REAL_ESTATE", "شقق للإيجار", "Apartments for Rent", forRent);
+  await addAttribute(rentApartments.id, "عدد الغرف", "Bedrooms", "SELECT", true, ROOMS, 1);
   await addAttribute(rentApartments.id, "مفروشة؟", "Furnished", "SELECT", false, [{ ar: "مفروشة", en: "Furnished" }, { ar: "غير مفروشة", en: "Unfurnished" }], 2);
-  await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "فيلات للإيجار", nameEn: "Villas for Rent", slug: slugify("villas-rent"), parentId: forRent.id } });
-  await db.category.create({ data: { kind: "REAL_ESTATE", nameAr: "محلات ومكاتب للإيجار", nameEn: "Commercial for Rent", slug: slugify("commercial-rent"), parentId: forRent.id } });
+  await cat("REAL_ESTATE", "فيلات للإيجار", "Villas for Rent", forRent);
+  await cat("REAL_ESTATE", "محلات ومكاتب للإيجار", "Commercial for Rent", forRent);
 
-  // ── Services ─────────────────────────────────────────────────────
-  const services = await db.category.create({ data: { kind: "SERVICE", nameAr: "خدمات", nameEn: "Services", slug: slugify("services"), icon: "wrench" } });
-  await db.category.create({ data: { kind: "SERVICE", nameAr: "تصميم وبرمجة", nameEn: "Design & Development", slug: slugify("design-dev"), parentId: services.id } });
-  await db.category.create({ data: { kind: "SERVICE", nameAr: "صيانة منزلية", nameEn: "Home Maintenance", slug: slugify("maintenance"), parentId: services.id } });
-  await db.category.create({ data: { kind: "SERVICE", nameAr: "دروس خصوصية", nameEn: "Tutoring", slug: slugify("tutoring"), parentId: services.id } });
-  await db.category.create({ data: { kind: "SERVICE", nameAr: "تنظيم مناسبات", nameEn: "Events", slug: slugify("events"), parentId: services.id } });
+  // ── Services ─────────────────────────────────────────────────
+  const services = await cat("SERVICE", "خدمات", "Services", undefined, "wrench");
+  await cat("SERVICE", "تصميم وبرمجة", "Design & Development", services);
+  await cat("SERVICE", "صيانة منزلية", "Home Maintenance", services);
+  await cat("SERVICE", "دروس خصوصية", "Tutoring", services);
+  await cat("SERVICE", "تنظيم مناسبات", "Events", services);
 
-  console.log("✅ Category tree: Products(Mobiles, Electronics>Laptops/TVs/Cameras, Fashion>Men/Women/Kids, Home, Vehicles>Cars/Motorcycles), Real Estate(For Sale/For Rent>Apartments/Villas/Land), Services(4 sub-categories)");
+  console.log("✅ Categories: 9 separate top-level groups (Phones, Electrical Appliances, Computers, Clothing, Furniture, Kids, Cars, Real Estate, Services)");
 }
 
 async function main() {
@@ -184,7 +205,36 @@ async function main() {
   console.log("✅ Seed complete");
 }
 
-main()
+// Re-creates ONLY the category tree on an existing database (use this to
+// move a live site to the new structure):  npm run db:reset-categories
+// Safe by default: refuses to run if any NON-demo listing exists (demo ads
+// have slugs starting with "demo-"; they are deleted and re-created by
+// seed-ads.ts afterwards). Users' interested-categories are re-assigned.
+async function resetCategories() {
+  const real = await db.product.count({ where: { NOT: { slug: { startsWith: "demo-" } } } });
+  if (real > 0 && process.env.FORCE !== "1") {
+    throw new Error(`${real} real listing(s) use the old categories. Move them first, or run with FORCE=1 to delete ALL listings.`);
+  }
+  await db.product.deleteMany({});
+  await db.userInterestCategory.deleteMany({});
+  await db.user.updateMany({ where: { categoryId: { not: null } }, data: { categoryId: null } });
+  await db.attributeOption.deleteMany({});
+  await db.productAttributeValue.deleteMany({});
+  await db.categoryAttribute.deleteMany({});
+  // children before parents (self-reference has no cascade)
+  for (let i = 0; i < 10; i++) {
+    const leaves = await db.category.findMany({ where: { children: { none: {} } }, select: { id: true } });
+    if (!leaves.length) break;
+    await db.category.deleteMany({ where: { id: { in: leaves.map((l) => l.id) } } });
+  }
+  await seedCategories();
+  const roots = await db.category.findMany({ where: { parentId: null }, select: { id: true } });
+  const users = await db.user.findMany({ where: { role: { not: "ADMIN" }, onboardingCompletedAt: { not: null } }, select: { id: true } });
+  await db.userInterestCategory.createMany({ data: users.flatMap((u) => roots.map((c) => ({ userId: u.id, categoryId: c.id }))), skipDuplicates: true });
+  console.log("✅ Categories reset. Now run: npx tsx prisma/seed-ads.ts");
+}
+
+(process.env.SEED_MODE === "categories" ? resetCategories() : main())
   .catch((e) => {
     console.error(e);
     process.exit(1);

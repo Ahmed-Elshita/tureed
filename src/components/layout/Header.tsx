@@ -22,7 +22,7 @@ export default async function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-3">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
         <Link href={`/${locale}`} className="flex shrink-0 items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-light to-secondary text-white font-display font-bold shadow-lg shadow-primary/30">
             T
@@ -30,13 +30,18 @@ export default async function Header() {
           <span className="font-display text-xl font-bold text-dark">tureed</span>
         </Link>
 
-        <Link
-          href={`/${locale}/search`}
-          className="hidden max-w-md flex-1 items-center gap-2 rounded-xl border border-gray-light bg-gray-bg px-4 py-2.5 text-sm text-mute md:flex"
-        >
-          <span>🔍</span>
-          <span className="truncate">{home("searchPlaceholder")}</span>
-        </Link>
+        <form action={`/${locale}/search`} method="get" className="order-last flex w-full items-center gap-2 md:order-none md:w-auto md:max-w-xl md:flex-1">
+          <input
+            name="q"
+            type="search"
+            enterKeyHint="search"
+            placeholder={home("searchPlaceholder")}
+            className="min-w-0 flex-1 rounded-xl border border-gray-light bg-gray-bg px-4 py-2.5 text-sm text-dark placeholder:text-mute focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button type="submit" aria-label={isAr ? "بحث" : "Search"} className="shrink-0 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">
+            🔍
+          </button>
+        </form>
 
         <div className="ms-auto flex shrink-0 items-center gap-2">
           <LanguageSwitch />

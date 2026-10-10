@@ -25,7 +25,7 @@ export default async function SellerPage({ params }: { params: Promise<{ locale:
       isVerified: true, ratingAvg: true, ratingCount: true, status: true,
       location: { select: { nameAr: true, nameEn: true } },
       category: { select: { nameAr: true, nameEn: true, slug: true } },
-      products: { where: { status: "PUBLISHED" }, include: { images: true, location: true }, orderBy: [{ boostedUntil: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }] },
+      products: { where: { status: "PUBLISHED" }, take: 100, include: { images: { take: 1, orderBy: { sortOrder: "asc" } }, location: true }, orderBy: [{ boostedUntil: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }] },
     },
   }).catch(() => null);
 
