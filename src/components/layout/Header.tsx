@@ -9,9 +9,8 @@ export default async function Header() {
   // Explicitly server-side APIs (not the client-named `useTranslations`/
   // `useLocale`) — this component is an async Server Component, and these
   // are the APIs next-intl documents for that context.
-  const [t, home, locale, sessionUserId] = await Promise.all([
+  const [t, locale, sessionUserId] = await Promise.all([
     getTranslations("nav"),
-    getTranslations("home"),
     getLocale(),
     getSessionUserId(),
   ]);
@@ -30,18 +29,6 @@ export default async function Header() {
           <span className="font-display text-xl font-bold text-dark">tureed</span>
         </Link>
 
-        <form action={`/${locale}/search`} method="get" className="order-last flex w-full items-center gap-2 md:order-none md:w-auto md:max-w-xl md:flex-1">
-          <input
-            name="q"
-            type="search"
-            enterKeyHint="search"
-            placeholder={home("searchPlaceholder")}
-            className="min-w-0 flex-1 rounded-xl border border-gray-light bg-gray-bg px-4 py-2.5 text-sm text-dark placeholder:text-mute focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
-          <button type="submit" aria-label={isAr ? "بحث" : "Search"} className="shrink-0 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white">
-            🔍
-          </button>
-        </form>
 
         <div className="ms-auto flex shrink-0 items-center gap-2">
           <LanguageSwitch />

@@ -1,5 +1,7 @@
 import { Meilisearch } from "meilisearch";
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
+import { rankDocuments, type Doc } from "./fuzzy";
 
 // Why Meilisearch and not a plain SQL LIKE '%...%' query: once you have
 // more than a few thousand listings, LIKE queries are slow, rank nothing
@@ -38,35 +40,50 @@ export async function removeFromIndex(id: string) {
   await client.index(INDEX).deleteDocument(id);
 }
 
-export async function searchListings(query: string, limit = 24) {
-  if (client) {
-    const result = await client.index(INDEX).search(query, { limit });
-    return result.hits as SearchableListing[];
-  }
-
-  // Dev fallback with no Meilisearch running: a basic Postgres search so
-  // the feature still works locally, just without relevance ranking or
-  // typo tolerance. Swap MEILI_HOST in .env once you deploy a real index.
-  const rows = await db.product.findMany({
-    where: {
-      status: "PUBLISHED",
-      OR: [
-        { titleAr: { contains: query, mode: "insensitive" } },
-        { titleEn: { contains: query, mode: "insensitive" } },
-        { descriptionAr: { contains: query, mode: "insensitive" } },
+// Corpus for the built-in (no-Meilisearch) search: id + titles + category
+// names of published listings, cached briefly so typing/searching doesn't
+// hit the DB for every query. Capped for safety (MVP scale).
+const loadCorpus = unstable_cache(
+  async (): Promise<Doc[]> => {
+    const rows = await db.product.findMany({
+      where: { status: "PUBLISHED" },
+      select: {
+        id: true, titleAr: true, titleEn: true, descriptionAr: true,
+        category: { select: { nameAr: true, nameEn: true, parent: { select: { nameAr: true, nameEn: true } } } },
+        location: { select: { nameAr: true, nameEn: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5000,
+    });
+    return rows.map((p) => ({
+      id: p.id,
+      fields: [
+        { text: `${p.titleAr} ${p.titleEn ?? ""}`, weight: 1 },
+        { text: `${p.category.nameAr} ${p.category.nameEn} ${p.category.parent?.nameAr ?? ""} ${p.category.parent?.nameEn ?? ""}`, weight: 0.9 },
+        { text: `${p.location.nameAr} ${p.location.nameEn}`, weight: 0.5 },
+        { text: p.descriptionAr.slice(0, 300), weight: 0.4 },
       ],
-    },
-    take: limit,
-    include: { category: true, location: true },
-  });
-  return rows.map((p) => ({
-    id: p.id,
-    titleAr: p.titleAr,
-    titleEn: p.titleEn,
-    descriptionAr: p.descriptionAr,
-    price: p.price ? Number(p.price) : null,
-    categorySlug: p.category.slug,
-    locationSlug: p.location.slug,
-    slug: p.slug,
-  }));
+    }));
+  },
+  ["search-corpus"],
+  { revalidate: 60, tags: ["listings"] }
+);
+
+// Returns listing ids, best match first. Forgiving: typo/prefix/synonym
+// tolerant, falls back to "closest results" instead of an empty page.
+export async function searchListingIds(query: string, limit = 500): Promise<string[]> {
+  if (client) {
+    try {
+      const result = await client.index(INDEX).search(query, { limit });
+      if (result.hits.length) return (result.hits as SearchableListing[]).map((h) => h.id);
+    } catch {
+      /* Meilisearch down or index empty — use the built-in search below */
+    }
+  }
+  return rankDocuments(query, await loadCorpus(), limit);
+}
+
+export async function searchListings(query: string, limit = 24) {
+  const ids = await searchListingIds(query, limit);
+  return ids.map((id) => ({ id }));
 }

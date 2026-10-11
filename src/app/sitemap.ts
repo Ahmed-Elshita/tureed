@@ -1,8 +1,9 @@
+import { SITE_URL } from "@/lib/siteUrl";
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { locales } from "@/i18n/config";
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://tureed.example.com";
+const BASE = SITE_URL;
 
 // Without this, Next tries to pre-render the sitemap at BUILD time, which
 // means every build needs a live database connection and the sitemap goes

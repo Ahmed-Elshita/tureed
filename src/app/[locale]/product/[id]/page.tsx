@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/siteUrl";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -58,7 +59,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product || product.seller.status === "SUSPENDED" || (product.status === "PAUSED" && !isOwner)) notFound();
 
   const title = isAr ? product.titleAr : product.titleEn ?? product.titleAr;
-  const shareUrl = `https://tureed.example.com/${locale}/product/${product.slug}`; // swap in the real domain once deployed
+  const shareUrl = `${SITE_URL}/${locale}/product/${product.slug}`; // swap in the real domain once deployed
   const isBoosted = !!(product.boostedUntil && product.boostedUntil > new Date());
 
   const [existingFavorite, existingCartItem] = sessionUserId

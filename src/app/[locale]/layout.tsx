@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/siteUrl";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -19,7 +20,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://tureed.example.com"),
+    metadataBase: new URL(SITE_URL),
     title: { default: "Tureed — More than a marketplace", template: "%s | Tureed" },
     description: "Buy, sell, and find real estate and services across Egypt.",
     alternates: localeAlternates(locale as Locale, "/"),

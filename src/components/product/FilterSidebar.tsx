@@ -14,8 +14,7 @@ interface Props {
   locationTree: TreeNode[];
   isAr: boolean;
   locale: string;
-  // Search page: free-text box + cascading category picker.
-  showKeyword?: boolean;
+  // Search page: cascading category picker.
   categoryTree?: TreeNode[];
   // Category page: direct sub-categories (and a way back up) as links.
   subcategories?: SubLink[];
@@ -36,13 +35,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 // Every filter lives in the URL (shareable, survives refresh). The same
 // component serves the search page and every category page.
-export default function FilterSidebar({ attributes, locationTree, isAr, locale, showKeyword, categoryTree, subcategories, parent }: Props) {
+export default function FilterSidebar({ attributes, locationTree, isAr, locale, categoryTree, subcategories, parent }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const paramsObj = Object.fromEntries(params.entries());
   const [open, setOpen] = useState(false); // mobile only; always visible from md up
 
-  const [q, setQ] = useState(params.get("q") ?? "");
   const [min, setMin] = useState(params.get("min") ?? "");
   const [max, setMax] = useState(params.get("max") ?? "");
 
@@ -52,7 +50,7 @@ export default function FilterSidebar({ attributes, locationTree, isAr, locale, 
 
   function applyText(e: React.FormEvent) {
     e.preventDefault();
-    go({ q: q.trim() || null, min: min || null, max: max || null });
+    go({ min: min || null, max: max || null });
   }
 
   function toggleOption(attributeId: string, optionId: string) {
@@ -64,7 +62,7 @@ export default function FilterSidebar({ attributes, locationTree, isAr, locale, 
 
   const selected = (attributeId: string) => new Set((params.get(`f_${attributeId}`) ?? "").split(",").filter(Boolean));
   const hasFilters = params.toString().length > 0;
-  const clearHref = showKeyword ? `/${locale}/search` : "?";
+  const clearHref = categoryTree ? `/${locale}/search` : "?";
 
   return (
     <aside className="w-full shrink-0 md:w-72 lg:w-80">
@@ -87,13 +85,8 @@ export default function FilterSidebar({ attributes, locationTree, isAr, locale, 
           )}
         </div>
 
-        {/* Keyword + price share one form so a single "Apply" sends both. */}
+        {/* Price applies with the button or Enter. */}
         <form onSubmit={applyText}>
-          {showKeyword && (
-            <Section title={isAr ? "كلمة البحث" : "Keyword"}>
-              <input className="field-select" value={q} onChange={(e) => setQ(e.target.value)} placeholder={isAr ? "اسم المنتج أو الخدمة..." : "Product or service..."} />
-            </Section>
-          )}
           <Section title={isAr ? "السعر (جنيه)" : "Price (EGP)"}>
             <div className="flex items-center gap-2">
               <input type="number" min={0} inputMode="numeric" placeholder={isAr ? "من" : "Min"} className="field-select" value={min} onChange={(e) => setMin(e.target.value)} />

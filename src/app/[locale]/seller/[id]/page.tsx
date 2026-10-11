@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/siteUrl";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
@@ -33,7 +34,7 @@ export default async function SellerPage({ params }: { params: Promise<{ locale:
 
   const isOwner = sessionUserId === seller.id;
   const displayName = seller.storeName ?? seller.name;
-  const pageUrl = `https://tureed.example.com/${locale}/seller/${seller.id}`; // swap in the real domain once deployed
+  const pageUrl = `${SITE_URL}/${locale}/seller/${seller.id}`; // swap in the real domain once deployed
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
